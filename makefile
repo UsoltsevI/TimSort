@@ -1,17 +1,17 @@
-all: TimSort.o TimSortTest.o ReadStrings.o
-	gcc TimSort.o TimSortTest.o ReadStrings.o -l m -o TS.exe
+all: TimSort.o TestTimsortTwo.o ReadStrings.o
+	gcc TimSort.o TestTimsortTwo.o ReadStrings.o -l m -o TS.exe
 
 TimSort.o: TimSort.c
 	gcc TimSort.c -c
 
-TimSortTest.o: TimSortTest.c
-	gcc TimSortTest.c -c
+TestTimsortTwo.o: TestTimsortTwo.c
+	gcc TestTimsortTwo.c -c
 
 ReadStrings.o: ReadStrings.c
 	gcc ReadStrings.c -c
 
 clean: 
-	rm TimSort.o TimSortTest.o ReadStrings.o
+	rm TimSort.o TestTimsortTwo.o ReadStrings.o
 
 run: 
 	./TS.exe Tests/MainTest.txt Tests/Result.txt

@@ -38,8 +38,8 @@ int test_timsort(char *main_test_name, char *result_file_name) {
     struct timespec ts_last, ts_current;
     double nlogn = 0;
 
-    read_strings(&tests_names, &num_tests, &buf, main_test_name);
-    change_str_ending_buf(buf);
+    read_strings(&tests_names, &num_tests, &buf, main_test_name, is_symbol_words);
+    change_str_ending_buf(buf, is_symbol_words);
 
     for (unsigned i = 0; i < num_tests; i++) {
         if (read_test_timsort_data(tests_names[i].str, &data, &answers, &N, &K, &X)) {

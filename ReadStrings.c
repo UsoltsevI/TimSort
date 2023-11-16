@@ -1,14 +1,14 @@
 #include "ReadStrings.h"
 
-void read_strings(struct string * *data, size_t *num_data_elem, char * * buf, const char* name_file_input) {
+void read_strings(struct string* * data, size_t* num_data_elem, char* * buf, const char* name_file_input, int (*is_cor_symb) (char)) {
     size_t num_buf_elem = read_strings_to_buf(buf, name_file_input);
 
-    *num_data_elem = count_number_wrods_in_buf(*buf, num_buf_elem);
+    *num_data_elem = count_number_strings_in_buf(*buf, num_buf_elem, is_cor_symb);
     
-    convert_buf_to_strings_array(data, *buf, *num_data_elem, num_buf_elem);
+    convert_buf_to_strings_array(data, *buf, *num_data_elem, num_buf_elem, is_cor_symb);
 }
 
-size_t read_strings_to_buf(char * *buf, const char* name_file_input) {
+size_t read_strings_to_buf(char* * buf, const char* name_file_input) {
     if (name_file_input == NULL) {
         printf("name_file_input == NULL\n");
         return -1;
@@ -20,7 +20,7 @@ size_t read_strings_to_buf(char * *buf, const char* name_file_input) {
 
     size_t num_buf_elem = (size_t) ftell(ReadableFile) + 1;   
 
-    *buf = (char *) calloc(num_buf_elem + 2, sizeof(char));  
+    *buf = (char*) calloc(num_buf_elem + 2, sizeof(char));  
 
     if (*buf == NULL) {
         printf("Failed reallocation at func %s for buf\n", __func__);
@@ -39,14 +39,11 @@ size_t read_strings_to_buf(char * *buf, const char* name_file_input) {
     return num_buf_elem;
 }
 
-int count_number_wrods_in_buf(char *buf,  const size_t num_buf_elem) {
+int count_number_strings_in_buf(char* buf,  const size_t num_buf_elem, int (*is_cor_symb) (char)) {
     int result = 0;
 
-    for (int i = 0; i < num_buf_elem; i++) {
-        if ((buf[i] == '\n') && (buf[i + 1] != '\n') && (buf[i + 1] != ' ') && (buf[i + 1] != '\0'))
-            result++;
-        
-        if ((buf[i] == ' ') && (buf[i + 1] != '\n') && (buf[i + 1] != ' ') && (buf[i + 1] != '\0'))
+    for (int i = 1; i < num_buf_elem; i++) {
+        if ((!is_cor_symb(buf[i])) && (is_cor_symb(buf[i - 1])))
             result++;
 
         if (buf[i] == '\0')
@@ -56,25 +53,32 @@ int count_number_wrods_in_buf(char *buf,  const size_t num_buf_elem) {
     return ++result;
 }
 
-int convert_buf_to_strings_array(struct string * *data, char * buf, const size_t num_data_elem, const size_t num_buf_elem) {
-    *data = (struct string *) calloc(num_data_elem + 1, sizeof(struct string));  
+int convert_buf_to_strings_array(struct string* * data, char* buf, const size_t num_data_elem, const size_t num_buf_elem, int (*is_cor_symb) (char)) {
+    *data = (struct string*) calloc(num_data_elem + 1, sizeof(struct string));  
 
     if (*data == NULL)
         return -1;
 
-    (*(*data + 0)).str = (char *) buf;
-
-    char *last_sep = (*(*data + 0)).str;
     size_t cur_buf_elem = 0, cur_data_elem = 0; 
 
-    while (cur_buf_elem < num_buf_elem) {
-        if ((buf[cur_buf_elem] == '\n') || (buf[cur_buf_elem] == ' ')) {
-            (*(*data + cur_data_elem)).len = (unsigned long) (&buf[cur_buf_elem - 1] - last_sep);
+    (*(*data + 0)).str = next_correct_elem(buf, &cur_buf_elem, is_cor_symb);
 
-            last_sep = &buf[cur_buf_elem];
+    char *last_sep = (*(*data + 0)).str;
+    size_t len = 0;
 
-            cur_data_elem++;
-            (*(*data + cur_data_elem)).str = next_correct_elem(buf, &cur_buf_elem);
+    while (cur_buf_elem <= num_buf_elem) {
+        if (!is_cor_symb(buf[cur_buf_elem])) {
+            if (len > 0) {
+                (*(*data + cur_data_elem)).str = last_sep;
+                (*(*data + cur_data_elem)).len = len;
+                cur_data_elem++;
+            }
+
+            last_sep = &buf[cur_buf_elem + 1];
+            len = 0;
+
+        } else {
+            len++;
         }
 
         cur_buf_elem++;
@@ -85,35 +89,37 @@ int convert_buf_to_strings_array(struct string * *data, char * buf, const size_t
     return 0;
 }
 
-static char *next_correct_elem(char * const buf, size_t *cur_buf_elem) {
-    while ((buf[*cur_buf_elem] == '\n') || (buf[*cur_buf_elem] == ' '))
+static char *next_correct_elem(char* const buf, size_t* cur_buf_elem, int (*is_cor_symb) (char)) {
+    while (!is_cor_symb(buf[*cur_buf_elem]))
         (*cur_buf_elem)++;
     
     return (buf + *cur_buf_elem);
 }
 
-void write_strings(struct string *data, const size_t num_data_elem, const char* name_file_output) {
-    printf("Output process started...\n");
-
+void write_strings(struct string* data, const size_t num_data_elem, const char* name_file_output) {
     FILE *file_output = fopen(name_file_output, "w");
 
     fprintf(file_output, "DATA: \n");
     fprintf(file_output, "str:              len:\n");
 
     for (size_t i = 0; i < num_data_elem; i++) { 
-        write_one_str(data[i].str, 10, file_output);
-        fprintf(file_output, "%10lu\n", data[i].len);
+        if (data[i].str) {
+            write_one_str(data[i], 10, file_output);
+            fprintf(file_output, "%10lu\n", data[i].len);
+
+        } else {
+            fprintf(file_output, "nil %16d\n", 0);
+        }
     }
 
     fclose(file_output);
-
-    printf("Output process finished\n");
 }
 
-static void write_one_str(const char *str, const size_t len, FILE *stream) {
+static void write_one_str(const struct string str, const size_t len, FILE* stream) {
     size_t i = 0;
-    for (; (str[i] != '\n') && (str[i] != ' ') && (str[i] != '\0'); i++)
-        fputc(str[i], stream);
+
+    for (; i < str.len; i++)
+        fputc(str.str[i], stream);
 
     for (; i < len; i++) 
         fputc(' ', stream);
@@ -135,7 +141,7 @@ int str_cmp_strings(const struct string s1, const struct string s2) {
     return s1.str[i] - s2.str[i];
 }
 
-int str_cmp_string_chars(const struct string s1, const char * s2) {
+int str_cmp_string_chars(const struct string s1, const char* s2) {
     assert(s1.str != NULL);
     assert(s2     != NULL);
 
@@ -151,7 +157,7 @@ int str_cmp_string_chars(const struct string s1, const char * s2) {
     return s1.str[i] - s2[i];
 }
 
-void clean_strings(struct string * *data, char * *buf) {
+void clean_strings(struct string* * data, char* * buf) {
     free(*data);
     free(*buf);
 
@@ -159,15 +165,15 @@ void clean_strings(struct string * *data, char * *buf) {
     *buf  = NULL;
 }
 
-int convert_str_to_int(const struct string s, int *a) {
-    size_t i = 0;
+int convert_str_to_int(const struct string s, int l, int r, int* a) {
+    size_t i = l;
     int result = 0;
 
-    for (; i < s.len - 1; i++) {
+    for (; i < r; i++) {
         if (!(('0' <= s.str[i]) && (s.str[i] <= '9')))
             return -1;
 
-        result += (s.str[i] - '0') * my_pow(10, s.len - i - 1);
+        result += (s.str[i] - '0') * my_pow(10, r - i);
     }
 
     if (s.str[i] == '-') {
@@ -193,9 +199,22 @@ int my_pow(int a, const int b) {
     return result;
 }
 
-void change_str_ending_buf(char *buf) {
+void change_str_ending_buf(char* buf, int (*is_cor_symb) (char)) {
     for (size_t i = 0; buf[i] != '\0'; i++)
-        if ((buf[i] == '\n') || (buf[i] == ' ') || (buf[i] == '\r'))
+        if (!is_cor_symb(buf[i]))
             buf[i] = '\0';
 }
 
+int is_symbol_words(char a) { //ASC2
+    if ((a < '!') || (a == ' '))
+        return 0;
+
+    return 1;
+}
+
+int is_symbol_lines(char a) { //ASC2
+    if ((a < '!') && (a != ' '))
+        return 0;
+
+    return 1;
+}
