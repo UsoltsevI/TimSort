@@ -1,17 +1,23 @@
-all: TimSort.o TestTimsortTwo.o ReadStrings.o
-	gcc TimSort.o TestTimsortTwo.o ReadStrings.o -l m -o TS.exe
+all: TimSort.o TimSortTest.o ReadStrings.o
+	gcc -O2 TimSort.o TimSortTest.o ReadStrings.o -l m -o TS.exe
+	@echo 'Usage option one: make run'
+	@echo 'Usage option two: ./TS.exe <inputfile> <outputfile>'
 
 TimSort.o: TimSort.c
-	gcc TimSort.c -c
+	gcc -O2 TimSort.c -c
 
-TestTimsortTwo.o: TestTimsortTwo.c
-	gcc TestTimsortTwo.c -c
+TimSortTest.o: TimSortTest.c
+	gcc -O2 TimSortTest.c -c
 
 ReadStrings.o: ReadStrings.c
-	gcc ReadStrings.c -c
+	gcc -O2 ReadStrings.c -c
 
 clean: 
-	rm TimSort.o TestTimsortTwo.o ReadStrings.o
+	rm TimSort.o TimSortTest.o ReadStrings.o
+
+compilegen: 
+	gcc -O2 TimSortGener.c -o TG.exe
+	@echo 'Usage: ./TG.exe <num_sets> <num_elem_in_set> <field_num> <name_file> '
 
 run: 
 	./TS.exe Tests/MainTest.txt Tests/Result.txt
