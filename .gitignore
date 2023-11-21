@@ -3,6 +3,8 @@ TG.exe
 TestingModule/TGM.exe
 TestingModule/TSM.exe
 TestingModule/TimSortTestMod.o
+TestingModule/TMST.exe
+TestingModule/TestModStandart.o
 ReadStrings.o
 TimSort.o
 TimSortTest.o

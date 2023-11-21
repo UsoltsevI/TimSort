@@ -21,3 +21,11 @@ gen:
 
 run: 
 	./TSM.exe Tests/MainTest.txt Tests/Result.txt
+
+TestModStandart.o: TestModStandart.c
+	gcc -O2 TestModStandart.c -c
+
+stcompile:
+	gcc -O2 TestModStandart.o ../TimSort.o -o TMST.exe 
+	@echo 'Usage: ./TMST.exe'
+	@echo 'And then: <num_elem> <elems> <mod>'
