@@ -1,5 +1,8 @@
 TS.exe
 TG.exe
+TestingModule/TGM.exe
+TestingModule/TSM.exe
+TestingModule/TimSortTestMod.o
 ReadStrings.o
 TimSort.o
 TimSortTest.o

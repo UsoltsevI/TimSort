@@ -5,7 +5,7 @@
 #include "TimSort.h"
 
 //#define RUNOFF
-#define DEBUGON
+//#define DEBUGON
 
 static const int MIN_LEN_TO_TIMSORT = 64;
 static const int RUN_THRESHHOLD_VAL = 7;
@@ -49,7 +49,7 @@ static void timsort_imp(void* const mem, const int len, const int size_elem, int
     int minrun = get_minrun(len);
     int add_step = 0;
     int cur_pos = 0;
-    int cur_checking_len = 0;
+    //int cur_checking_len = 0;
     int is_sorted = 0;
 
     struct subarr_stack stk = {};
