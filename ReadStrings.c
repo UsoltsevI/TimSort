@@ -29,7 +29,7 @@ size_t read_strings_to_buf(char* * buf, const char* name_file_input) {
 
     fseek(ReadableFile, 0, SEEK_SET);
 
-    fread(*buf, sizeof(char), num_buf_elem, ReadableFile);
+    fread(*buf, sizeof(char), num_buf_elem + 1, ReadableFile);
 
     fclose(ReadableFile);
      
@@ -45,12 +45,9 @@ int count_number_strings_in_buf(char* buf,  const size_t num_buf_elem, int (*is_
     for (int i = 1; i < num_buf_elem; i++) {
         if ((!is_cor_symb(buf[i])) && (is_cor_symb(buf[i - 1])))
             result++;
-
-        if (buf[i] == '\0')
-            return ++result;
     }
 
-    return ++result;
+    return result;
 }
 
 int convert_buf_to_strings_array(struct string* * data, char* buf, const size_t num_data_elem, const size_t num_buf_elem, int (*is_cor_symb) (char)) {
@@ -96,26 +93,26 @@ static char *next_correct_elem(char* const buf, size_t* cur_buf_elem, int (*is_c
     return (buf + *cur_buf_elem);
 }
 
-void write_strings(struct string* data, const size_t num_data_elem, const char* name_file_output) {
+void write_strings(struct string* data, const size_t len, size_t num_data_elem, const char* name_file_output) {
     FILE *file_output = fopen(name_file_output, "w");
 
     fprintf(file_output, "DATA: \n");
-    fprintf(file_output, "str:              len:\n");
+    fprintf(file_output, "str:");
+
+    for (int i = 0; i < len + 3; i++)
+        fprintf(file_output, "%c", ' ');
+
+    fprintf(file_output, "len:\n");
 
     for (size_t i = 0; i < num_data_elem; i++) { 
-        if (data[i].str) {
-            write_one_str(data[i], 10, file_output);
-            fprintf(file_output, "%10lu\n", data[i].len);
-
-        } else {
-            fprintf(file_output, "nil %16d\n", 0);
-        }
+        write_one_str(data[i], len, file_output);
+        fprintf(file_output, "%10lu\n", data[i].len);
     }
 
     fclose(file_output);
 }
 
-static void write_one_str(const struct string str, const size_t len, FILE* stream) {
+static void write_one_str(const string str, const size_t len, FILE* stream) {
     size_t i = 0;
 
     for (; i < str.len; i++)
@@ -166,21 +163,27 @@ void clean_strings(struct string* * data, char* * buf) {
 }
 
 int convert_str_to_int(const struct string s, int l, int r, int* a) {
-    size_t i = l;
+    size_t i = r;
     int result = 0;
+    int sen_deg = 1;
 
-    for (; i < r; i++) {
+    for (; i > l; i--) {
         if (!(('0' <= s.str[i]) && (s.str[i] <= '9')))
             return -1;
 
-        result += (s.str[i] - '0') * my_pow(10, r - i);
+        result += (s.str[i] - '0') * sen_deg;
+
+        sen_deg *= 10;
     }
 
     if (s.str[i] == '-') {
         result *= (-1);
 
     } else {
-        result += s.str[i] - '0';
+        if (!(('0' <= s.str[i]) && (s.str[i] <= '9')))
+            return -1;
+        
+        result += (s.str[i] - '0') * sen_deg;
     }
 
     *a = result;
