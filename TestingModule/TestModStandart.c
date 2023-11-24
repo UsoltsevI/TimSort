@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <malloc.h>
-#include "../TimSort.h"
+#include "../timsort.h"
 
 int MOD = 0;
 

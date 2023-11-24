@@ -1,5 +1,5 @@
-#include "../TimSort.h"
-#include "../ReadStrings.h"
+#include "../timsort.h"
+#include "../readstrings.h"
 #include <time.h>
 #include <stdio.h>
 #include <malloc.h>

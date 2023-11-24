@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
-#include "timsort.h"
+#include "TimSort.h"
 
 static const size_t MIN_LEN_TO_TIMSORT = 64;
 static const size_t RUN_THRESHHOLD_VAL = 7;
@@ -31,6 +31,33 @@ static void new_stack(struct subarr_stack * const stk, const size_t beg_capacity
 static void push_stack(struct subarr_stack * const stk, struct subarray * const new_elem);
 static void pop_stack(struct subarr_stack * const stk, struct subarray * const out);
 
+#define DEBUGON
+#ifdef DEBUGON
+#include <time.h>
+static const int MICROSEC_AS_NSEC = 1000;
+static const int SEC_AS_NSEC = 1000000000;
+
+#define SEC_AS_MICROSEC (SEC_AS_NSEC / MICROSEC_AS_NSEC)
+
+static double diff(struct timespec start, struct timespec end) {
+    struct timespec temp;
+
+    if (end.tv_nsec - start.tv_nsec < 0) {
+        temp.tv_sec = end.tv_sec - start.tv_sec - 1;
+        temp.tv_nsec = SEC_AS_NSEC + end.tv_nsec - start.tv_nsec;
+
+    } else {
+        temp.tv_sec = end.tv_sec - start.tv_sec;
+        temp.tv_nsec = end.tv_nsec - start.tv_nsec;
+    }
+
+    double msec = temp.tv_sec * SEC_AS_MICROSEC + temp.tv_nsec / MICROSEC_AS_NSEC;
+    
+    return msec / SEC_AS_MICROSEC;
+}
+
+#endif
+
 void timsort(void * const mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     if (len <= MIN_LEN_TO_TIMSORT) {
         inssort(mem, 0, len, size_elem, cmp);
@@ -49,7 +76,12 @@ static void timsort_imp(void * const mem, const size_t len, const size_t size_el
     struct subarray subarr_x; 
     struct subarray subarr_y; 
 
+    printf("minrun = %lu, len = %lu\n", minrun, len);
+
     new_stack(&stk, len / minrun + 1);   
+
+    struct timespec tbeg, tend;
+    double time_ins = 0, time_bal = 0, time_mer = 0;
 
     while (cur_pos < len) {
         add_step = cur_pos;
@@ -63,28 +95,50 @@ static void timsort_imp(void * const mem, const size_t len, const size_t size_el
             add_step++;
         }
 
+        timespec_get(&tbeg, TIME_UTC);
         if (!is_sorted)
             inssort(mem, cur_pos, add_step, size_elem, cmp);
+        timespec_get(&tend, TIME_UTC);
+        //printf("diff ins = %lf\n", diff(tbeg, tend));
+        time_ins += diff(tbeg, tend);
 
         subarr_x.beg = cur_pos;
         subarr_x.size = add_step - cur_pos;
         cur_pos = add_step;
 
+        printf("%lu ", subarr_x.size);
+
         push_stack(&stk, &subarr_x);
 
+        timespec_get(&tbeg, TIME_UTC);
         timsort_blance(mem, size_elem, len, &stk, cmp);
+        timespec_get(&tend, TIME_UTC);
+        //printf("diff bal = %lf\n", diff(tbeg, tend));
+        time_bal += diff(tbeg, tend);
     }
+
+    printf("\nstack:\n");
+    for (int i = 0; i < stk.size; i++)
+        printf("%lu ", stk.data[i].size);
+
+    printf("\n");
 
     while (stk.size > 1) { 
         pop_stack(&stk, &subarr_x);
         pop_stack(&stk, &subarr_y);
 
+        timespec_get(&tbeg, TIME_UTC);
         timsort_merge(mem, size_elem, subarr_y.beg, subarr_x.beg, subarr_x.beg + subarr_x.size - 1, cmp);
+        timespec_get(&tend, TIME_UTC);
+        //printf("diff merge = %lf\n", diff(tbeg, tend));
+        time_mer += diff(tbeg, tend);
 
         subarr_y.size += subarr_x.size;
 
         push_stack(&stk, &subarr_y);
     } 
+
+    printf("time_ins = %lf, time_bal = %lf, time_mer = %lf\n", time_ins, time_bal, time_mer);
 
     free(stk.data);
 }   
@@ -208,9 +262,8 @@ static void inssort(void * const arr, const size_t first, const size_t last, con
 
 static size_t moveright(void * const arr, void * const key, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     for (size_t i = 0; i < last; i++) {
-        if (cmp(key, arr + i * size_elem) < 0) {
-            for (size_t j = last; j > i; j--)
-                memcpy(arr + j * size_elem, arr + (j - 1) * size_elem, size_elem);
+        if (cmp(key, arr + i * size_elem) < 0) {     
+            memmove(arr + (i + 1) * size_elem, arr + i * size_elem, size_elem * (last - i));
 
             return i;
         }

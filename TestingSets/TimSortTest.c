@@ -1,7 +1,8 @@
-#include "../TimSort.h"
-#include "../ReadStrings.h"
+#include "../timsort.h"
+#include "../readstrings.h"
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include <malloc.h>
 #include <math.h>
 
@@ -13,7 +14,7 @@ int X_FIELD = 0; //a global variable for passing the value of the comparison fun
 //#define PT printf("L: %d\n", __LINE__);
 //#define DEBUGONTST //to display array data on the screen
 
-//#define CHECKON
+#define CHECKON
 
 int test_timsort(char *main_test_name, char *result_file_name);
 unsigned read_tests_files_names(char *main_test_name, char * * *tests_names, unsigned *num_tests, char * *buf);
@@ -21,7 +22,7 @@ int read_test_timsort_data(const char *filename, char * *data, char * *answers, 
 void printf_data(const char* filename, char* const data, const unsigned N, const unsigned K, const unsigned X);
 int check_answers(FILE* resultfile, char* const data, char* const answers, const unsigned N, const unsigned K);
 
-int compare_by_x_field(void *lhs, void* rhs);
+int compare_by_x_field(const void *lhs, const void* rhs);
 
 static double diff(struct timespec start, struct timespec end);
 
@@ -216,7 +217,7 @@ int check_answers(FILE* resultfile, char* const data, char* const answers, const
     return 0;
 }
 
-int compare_by_x_field(void* const lhs, void* const rhs) {
+int compare_by_x_field(const void* lhs, const void* rhs) {
     char* lhs_c = (char*) lhs;
     char* rhs_c = (char*) rhs;
     return *(lhs_c + X_FIELD) - *(rhs_c + X_FIELD);

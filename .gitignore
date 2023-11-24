@@ -2,9 +2,12 @@ TS.exe
 TG.exe
 TestingModule/TGM.exe
 TestingModule/TSM.exe
-TestingModule/TimSortTestMod.o
+TestingModule/timsortTestMod.o
 TestingModule/TMST.exe
 TestingModule/TestModStandart.o
-ReadStrings.o
+readstrings.o
+timsort.o
+timsortTest.o
+TQI.exe
 TimSort.o
-TimSortTest.o
+TimSort.c
