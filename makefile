@@ -14,4 +14,10 @@ runint:
 
 runvsq:
 	./TQI.exe -tim_vs_q
+
+runsp:
+	./TQI.exe -tim_vs_q < TestingModule/Tests/Test4.txt
+
+runisp:
+	valgrind ./TQI.exe -tim_int < TestingModule/Tests/Test2.txt
 	

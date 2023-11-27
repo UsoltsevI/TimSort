@@ -11,3 +11,5 @@ timsortTest.o
 TQI.exe
 TimSort.o
 TimSort.c
+*.txt
+*.exe

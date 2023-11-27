@@ -220,6 +220,9 @@ int check_answers(FILE* resultfile, char* const data, char* const answers, const
 int compare_by_x_field(const void* lhs, const void* rhs) {
     char* lhs_c = (char*) lhs;
     char* rhs_c = (char*) rhs;
+#ifdef DUMP
+    printf("<%d - %d> ", *(lhs_c + X_FIELD), *(rhs_c + X_FIELD));
+#endif
     return *(lhs_c + X_FIELD) - *(rhs_c + X_FIELD);
 }
 

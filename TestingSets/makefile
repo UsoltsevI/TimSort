@@ -13,11 +13,11 @@ TimSortTest.o: TimSortTest.c
 	gcc -O2 ../readstrings.c -c -o ../readstrings.o
 
 clean: 
-	rm timsortTest.o
+	rm TimSortTest.o
 
 compilegen: 
 	gcc -O2 timsortGener.c -o TG.exe
 	@echo 'Usage: ./TG.exe <num_sets> <num_elem_in_set> <field_num> <name_file> '
 
 run: 
-	./TS.exe Tests/MainTest.txt Tests/Result.txt
+	valgrind ./TS.exe Tests/MainTest.txt Tests/Result.txt 
