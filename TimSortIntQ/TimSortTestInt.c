@@ -43,9 +43,11 @@ void timsort_int() {
 
     timsort(data, N, sizeof(int), &cmp_int);
 
+//#define DUMP
+#ifdef DUMP
     for (int i = 0; i < N; i++)
         printf("%d ", data[i]);
-    
+#endif
     free(data);
 }
 
