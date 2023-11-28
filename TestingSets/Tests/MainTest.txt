@@ -1,4 +1,4 @@
-Tests/Test1.txt
-Tests/Test2.txt
-Tests/Test3.txt
-Tests/Test4.txt
+TestingSets/Tests/Test1.txt
+TestingSets/Tests/Test2.txt
+TestingSets/Tests/Test3.txt
+TestingSets/Tests/Test4.txt

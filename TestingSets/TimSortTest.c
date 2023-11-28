@@ -138,7 +138,8 @@ int read_test_timsort_data(const char *filename, char * *data, char * *answers, 
     FILE *testfile = fopen(filename, "r");
 
     if (testfile == NULL) {
-        printf("failure while opening a file for reading\n");
+        printf("failure while opening a file <%s> for reading\n", filename);
+        perror("fopen returned: ");
         return -1;
     }
 

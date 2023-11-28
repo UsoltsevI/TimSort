@@ -7,14 +7,14 @@
 
 static int X_FIELD = 0;
 
-//#define CHECKON
+#define CHECKON
 //#define PRINTON
 
 static int test_timsort(char *main_test_name, char *result_file_name);
 static unsigned read_tests_files_names(char *main_test_name, char * * *tests_names, unsigned *num_tests, char * *buf);
 static int read_test_timsort_data(const char *filename, char * * *data, char * *answers, unsigned *N, unsigned *K, unsigned *X);
 static int check_answers(FILE* resultfile, char * *data, char * const answers, const unsigned N, const unsigned K);
-int compare_by_x_field_two(void* a, void* b);
+int compare_by_x_field_two(const void* a, const void* b);
 
 static double diff(struct timespec start, struct timespec end);
 
@@ -186,7 +186,7 @@ static int check_answers(FILE* resultfile, char * *data, char * const answers, c
     return 0;
 }
 
-int compare_by_x_field_two(void* a, void* b) {
+int compare_by_x_field_two(const void* a, const void* b) {
     char** ac = (char**) a;
     char** bc = (char**) b;
 

@@ -13,14 +13,14 @@ int MOD = 0; //a global variable for passing the value of the comparison functio
 //#define DEBUGONTST //to display array data on the screen
 
 //turn it on if ypu want to check answers
-//#define CHECKON
+#define CHECKON
 
 int test_timsort(char *main_test_name, char *result_file_name);
 static int read_test_timsort_data(const char *filename, int * *data, int * *answers, unsigned *N, int *m);
 static void printf_data(const char* filename, int* const data, const unsigned N, const unsigned m);
 static int check_answers(FILE* resultfile, int* const data, int* const answers, const unsigned N);
 
-static int compare_by_mod(void *lhs, void* rhs);
+static int compare_by_mod(const void *lhs, const void* rhs);
 
 static double diff(struct timespec start, struct timespec end);
 
@@ -163,7 +163,7 @@ static int read_test_timsort_data(const char *filename, int * *data, int * *answ
 
 #ifdef CHECKON
     if (check != (*N) * 2 + 2) {
-        printf("failure while reading a file\n");
+        printf("failure while reading a file (with checking)\n");
         return -1;
     }
 #else 
@@ -207,7 +207,7 @@ static int check_answers(FILE* resultfile, int* const data, int* const answers, 
     return 0;
 }
 
-static int compare_by_mod(void* const lhs, void* const rhs) {
+static int compare_by_mod(const void* lhs, const void* rhs) {
     int* lhs_c = (int*) lhs;
     int* rhs_c = (int*) rhs;
     return ((*lhs_c) % MOD) - ((*rhs_c) % MOD);
