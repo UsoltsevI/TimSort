@@ -58,26 +58,30 @@ void timsort_vs_qsort() {
 
     check += scanf("%lu", &N);
 
-    int *data = (int *) calloc(N, sizeof(int));
+    int *data1 = (int *) calloc(N, sizeof(int));
+    int *data2 = (int *) calloc(N, sizeof(int));
 
-    for (int i = 0; i < N; i++)
-        check += scanf("%d", &data[i]);
+    for (int i = 0; i < N; i++) {
+        check += scanf("%d", &data1[i]);
+        data2[i] = data1[i];
+    }
 
     timespec_get(&ts_last, TIME_UTC);
-    timsort(data, N, sizeof(int), &cmp_int);
+    timsort(data1, N, sizeof(int), &cmp_int);
     timespec_get(&ts_current, TIME_UTC);
     timsort_time = diff(ts_last, ts_current);
 
     printf("timsort_time = %lf\n", timsort_time); 
 
     timespec_get(&ts_last, TIME_UTC);
-    qsort(data, N, sizeof(int), &cmp_int);
+    qsort(data2, N, sizeof(int), &cmp_int);
     timespec_get(&ts_current, TIME_UTC);
     qsort_time = diff(ts_last, ts_current);
 
     printf("qsort_time = %lf\n", qsort_time);
 
-    free(data);
+    free(data1);
+    free(data2);
 }
 
 int cmp_int(const void *a, const void *b) {

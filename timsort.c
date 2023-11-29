@@ -91,18 +91,21 @@ static void timsort_merge(void * const mem, const size_t size_elem, const size_t
     void *mem_copy = malloc(len_copy * size_elem);
     size_t pos_copy = 0, pos_right = mid;
     size_t first_run_elem = 0;
+    int cmp_res = 0;
 
     memcpy(mem_copy, mem + left * size_elem, len_copy * size_elem);
 
+    cmp_res = cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem);
+
     for (size_t i = left; i < right + 1; i++) {
-        if ((pos_right > right) || ((pos_copy < len_copy) && (cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem) <= 0))) {
+        if ((pos_right > right) || ((pos_copy < len_copy) && (cmp_res <= 0))) {
             first_run_elem = pos_copy;
  
             if (pos_right > right)
                 pos_copy = len_copy - 1;
             
             pos_copy++;
-            while ((pos_copy + 1 < len_copy) && (cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem) <= 0))
+            while ((pos_copy < len_copy) && ((cmp_res = cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem)) <= 0))
                 pos_copy++;
         
             memcpy(mem + i * size_elem, mem_copy + first_run_elem * size_elem, (pos_copy - first_run_elem) * size_elem);
@@ -115,8 +118,7 @@ static void timsort_merge(void * const mem, const size_t size_elem, const size_t
                 pos_right = right;
 
             pos_right++;
-
-            while ((pos_right < right) && (cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem) > 0))
+            while ((pos_right <= right) && ((cmp_res = cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem)) > 0))
                 pos_right++;
             
             memmove(mem + i * size_elem, mem + first_run_elem * size_elem, (pos_right - first_run_elem) * size_elem);
