@@ -41,13 +41,21 @@ void timsort_int() {
     for (int i = 0; i < N; i++)
         check += scanf("%d", &data[i]);
 
-    timsort(data, N, sizeof(int), &cmp_int);
+    struct timespec ts_last, ts_current;
+    double timsort_time;
 
-//#define DUMP
-#ifdef DUMP
+    timespec_get(&ts_last, TIME_UTC);
+    timsort(data, N, sizeof(int), &cmp_int);
+    timespec_get(&ts_current, TIME_UTC);
+
+    timsort_time = diff(ts_last, ts_current);
+    printf("timsort execution time = %lf\n", timsort_time); 
+
     for (int i = 0; i < N; i++)
         printf("%d ", data[i]);
-#endif
+    
+    printf("\n");
+
     free(data);
 }
 
@@ -64,6 +72,11 @@ void timsort_vs_qsort() {
     for (int i = 0; i < N; i++) {
         check += scanf("%d", &data1[i]);
         data2[i] = data1[i];
+    }
+
+    if (check != N + 1) {
+        printf("Invalid enter: check  = %lu, N + 1 = %lu\n", check, N + 1);
+        return ;
     }
 
     timespec_get(&ts_last, TIME_UTC);

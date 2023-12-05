@@ -5,30 +5,40 @@
 
 static const size_t MIN_LEN_TO_MERGESORT = 64;
 
+#define IS_INCREASES 1
+#define IS_DECREASES -1
+#define NOT_SORTED   0
+#define UNDEF_MONOTON 2
+
+//#define DEBUGTS //it is not a comment)
+
 struct subarray {
     size_t beg;
     size_t size;
 };
 
+//we don't need to kepp a capacity in the stack structure
+//because we allocate memory for the stack once
+//and this stack should work fast
+//without unnecessary checks
 struct subarr_stack {
     struct subarray* data;
-    size_t capacity;
     size_t size;
 };
 
-static void timsort_imp(void * const mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *));
-static void timsort_merge(void * const mem, const size_t size_elem, const size_t left, const size_t mid, const size_t right, int (*cmp)(const void *, const void *));
-static void timsort_blance(void * const mem, const size_t size_elem, const size_t len, struct subarr_stack * const stk, int (*cmp)(const void *, const void *));
+static void timsort_imp(void *mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *));
+static void timsort_merge(void *mem, const size_t size_elem, const size_t left, const size_t mid, const size_t right, int (*cmp)(const void *, const void *));
+static void timsort_blance(void *mem, const size_t size_elem, const size_t len, struct subarr_stack *stk, int (*cmp)(const void *, const void *));
+static void reverse(void *arr, const size_t first, const size_t last, const size_t size_elem);
 
-static void inssort(void * const arr, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *));
-static size_t moveright(void * const arr, void * const key, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *));
+static size_t moveright(void *arr, void *key, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *));
 static size_t get_minrun(size_t n);
 
-static void new_stack(struct subarr_stack * const stk, const size_t beg_capacity);
-static void push_stack(struct subarr_stack * const stk, struct subarray * const new_elem);
-static void pop_stack(struct subarr_stack * const stk, struct subarray * const out);
+static void new_stack(struct subarr_stack *stk, const size_t beg_capacity);
+static void push_stack(struct subarr_stack *stk, struct subarray *new_elem);
+static void pop_stack(struct subarr_stack *stk, struct subarray *out);
 
-void timsort(void * const mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *)) {
+void timsort(void *mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     if (len <= MIN_LEN_TO_MERGESORT) {
         inssort(mem, 0, len, size_elem, cmp);
         return;
@@ -37,30 +47,68 @@ void timsort(void * const mem, const size_t len, const size_t size_elem, int (*c
     timsort_imp(mem, len, size_elem, cmp);
 }
 
-static void timsort_imp(void * const mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *)) {
+#ifdef DEBUGTS
+#include <assert.h>
+
+//this function exists to verify that the sorting is performed correctly at each step
+int check_array(void *mem, const size_t size_elem, const size_t left, const size_t right, int (*cmp)(const void *, const void *)) {
+    for (size_t i = left; i < right; i++) {
+        if (cmp(mem + i * size_elem, mem + (i + 1) * size_elem) > 0)
+            return NOT_SORTED;
+    }
+
+    return IS_INCREASES;
+}
+#endif
+
+static void timsort_imp(void *mem, const size_t len, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     size_t minrun = get_minrun(len);
     size_t add_step = 0, cur_pos = 0;
-    size_t is_sorted = 0;
+    size_t is_sorted = UNDEF_MONOTON;
 
     struct subarr_stack stk;
     struct subarray subarr_x; 
     struct subarray subarr_y; 
 
-    new_stack(&stk, len / minrun + 1);   
+    //we create a stack for the maximum possible number of items at runtime
+    new_stack(&stk, len / minrun + 1);
 
     while (cur_pos < len) {
         add_step = cur_pos;
-        is_sorted = 1;
+        is_sorted = UNDEF_MONOTON;
 
-        while ((add_step < len) && ((add_step > len - minrun) || (add_step - cur_pos < minrun) || (is_sorted))) {
-            if (is_sorted) 
-                if ((add_step + 1 < len) && (cmp(mem + add_step * size_elem, mem + (add_step + 1) * size_elem) > 0))
-                    is_sorted = 0;
+        //the last elements we add to the the last subarray
+        //all arrays have len >= minrun
+        //if array is sorted we continue until it is not
+        while ((add_step < len) && ((add_step > len - minrun) || (add_step - cur_pos < minrun) || (is_sorted != NOT_SORTED))) {
+            //if the array isn't sirted, we do not need other checks and conditions
+            if ((is_sorted != NOT_SORTED) && (add_step + 1 < len)) {
+                int check_cmp = cmp(mem + add_step * size_elem, mem + (add_step + 1) * size_elem);
+
+                if (is_sorted == UNDEF_MONOTON) {
+                    if (check_cmp < 0) {
+                        is_sorted = IS_INCREASES;
+
+                    } else if (check_cmp > 0) {
+                        is_sorted = IS_DECREASES;
+                    } 
+                    //in the last case we leave UNDEF_MONOTON
+
+                } else if ((is_sorted == IS_INCREASES) && (check_cmp > 0)) {
+                    is_sorted = NOT_SORTED;
+                    
+                } else if ((is_sorted == IS_DECREASES) && (check_cmp < 0)) {
+                    is_sorted = NOT_SORTED;
+                }
+            }
             
             add_step++;
         }
 
-        if (!is_sorted)
+        if (is_sorted == IS_DECREASES)
+            reverse(mem, cur_pos, add_step - 1, size_elem);
+
+        if (is_sorted == NOT_SORTED)
             inssort(mem + cur_pos * size_elem, 0, add_step - cur_pos, size_elem, cmp);
 
         subarr_x.beg = cur_pos;
@@ -72,6 +120,7 @@ static void timsort_imp(void * const mem, const size_t len, const size_t size_el
         timsort_blance(mem, size_elem, len, &stk, cmp);
     }
 
+    //emptying the stack
     while (stk.size > 1) { 
         pop_stack(&stk, &subarr_x);
         pop_stack(&stk, &subarr_y);
@@ -83,16 +132,21 @@ static void timsort_imp(void * const mem, const size_t len, const size_t size_el
         push_stack(&stk, &subarr_y);
     } 
 
+#ifdef DEBUGTS
+    assert(check_array(mem, size_elem, 0, len - 1, cmp));
+#endif
+
     free(stk.data);
 }   
 
-static void timsort_merge(void * const mem, const size_t size_elem, const size_t left, const size_t mid, const size_t right, int (*cmp)(const void *, const void *)) {
+static void timsort_merge(void *mem, const size_t size_elem, const size_t left, const size_t mid, const size_t right, int (*cmp)(const void *, const void *)) {
     size_t len_copy = mid - left;
     void *mem_copy = malloc(len_copy * size_elem);
     size_t pos_copy = 0, pos_right = mid;
     size_t first_run_elem = 0;
     int cmp_res = 0;
 
+    //the calling function guarantees (right - mid) >= minrun > 0 and (mid - left) >= minrun > 0
     memcpy(mem_copy, mem + left * size_elem, len_copy * size_elem);
 
     cmp_res = cmp(mem_copy + pos_copy * size_elem, mem + pos_right * size_elem);
@@ -126,10 +180,14 @@ static void timsort_merge(void * const mem, const size_t size_elem, const size_t
         }
     }
 
+#ifdef DEBUGTS
+    assert(check_array(mem, size_elem, left, right, cmp));
+#endif
+
     free(mem_copy);
 }
 
-static void timsort_blance(void * const mem, const size_t size_elem, const size_t len, struct subarr_stack * const stk, int (*cmp)(const void *, const void *)) {
+static void timsort_blance(void *mem, const size_t size_elem, const size_t len, struct subarr_stack *stk, int (*cmp)(const void *, const void *)) {
     int loop_on = 1;
 
     while ((stk->size > 2) && (loop_on)) {
@@ -167,7 +225,19 @@ static void timsort_blance(void * const mem, const size_t size_elem, const size_
     } 
 }
 
-static void inssort(void * const arr, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *)) {
+static void reverse(void *arr, const size_t first, const size_t last, const size_t size_elem) {
+    void *c = malloc(size_elem);
+
+    for (size_t i = 0; i <= (last - first) / 2; i++) {
+        memcpy(c, arr + (i + first) * size_elem, size_elem);
+        memcpy(arr + (i + first) * size_elem, arr + (last - i) * size_elem, size_elem);
+        memcpy(arr + (last - i) * size_elem, c, size_elem);
+    }
+
+    free(c);
+}
+
+void inssort(void * arr, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     size_t i = 0, pos = 0;
     void *key = malloc(size_elem);
 
@@ -180,7 +250,7 @@ static void inssort(void * const arr, const size_t first, const size_t last, con
     free(key);
 }
 
-static size_t moveright(void * const arr, void * const key, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *)) {
+static size_t moveright(void * arr, void * key, const size_t first, const size_t last, const size_t size_elem, int (*cmp)(const void *, const void *)) {
     size_t ise = 0;
 
     for (size_t i = first; i < last; i++) {
@@ -196,6 +266,7 @@ static size_t moveright(void * const arr, void * const key, const size_t first, 
     return last;
 }
 
+//copied from vikipedia
 static size_t get_minrun(size_t n) {
     size_t r = 0;
 
@@ -207,20 +278,26 @@ static size_t get_minrun(size_t n) {
     return r + n;
 }
 
-static void new_stack(struct subarr_stack * const stk, const size_t beg_capacity) {
-    stk->capacity = beg_capacity;
+//simple and fast stack functions
+//without unnecessary checks
+static void new_stack(struct subarr_stack *stk, const size_t beg_capacity) {
     stk->size = 0;
     stk->data = (struct subarray *) malloc(beg_capacity * sizeof(struct subarray));
 }
 
-static void push_stack(struct subarr_stack * const stk, struct subarray * const new_elem) {
+static void push_stack(struct subarr_stack *stk, struct subarray *new_elem) {
     stk->data[stk->size].beg  = new_elem->beg;
     stk->data[stk->size].size = new_elem->size;
     stk->size++;
 }
 
-static void pop_stack(struct subarr_stack * const stk, struct subarray * const out) {
+static void pop_stack(struct subarr_stack *stk, struct subarray *out) {
     stk->size--;
     out->beg  = stk->data[stk->size].beg;
     out->size = stk->data[stk->size].size;
 }
+
+#undef IS_INCREASES
+#undef IS_DECREASES
+#undef NOT_SORTED
+#undef UNDEF_MONOTON
